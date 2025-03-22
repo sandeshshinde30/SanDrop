@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: sandrop-mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: sandropdb
+    volumes:
+      - ./mongo-data:/data/db  # Mount MongoDB data to local directory
+
+  backend:
+    image: sandrop-backend:1.0
+    container_name: sandrop-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://admin:password@sandrop-mongo:27017/sandropdb?authSource=admin
