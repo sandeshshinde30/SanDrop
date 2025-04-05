@@ -1,0 +1,33 @@
+exit
+db.files.find()
+db.files
+show collections
+use sandropdb
+show dbs
+exit
+show dbs
+exit
+mongosh -u admin -p password --authenticationDatabase admin
+mongosh -u <username> -p <password> --authenticationDatabase admin
+show dbs
+show db
+use
+collections
+collection
+colletion
+colletions
+exit
+db.files.find()
+db.users.find()
+db.users.find().pretty()
+show collections
+use sandropdb
+show test.collections
+show db.collections
+show db.collection
+show db.colletion
+show db.colletions
+show colletions
+show dbs
+show db
+ls
