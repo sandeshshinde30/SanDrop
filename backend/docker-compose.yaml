@@ -24,3 +24,12 @@ services:
       - mongo
     environment:
       MONGO_URI: mongodb://admin:password@sandrop-mongo:27017/sandropdb?authSource=admin
+
+  frontend:
+    image: sandeshdocker30/sandrop-frontend:1.0
+    container_name: sandrop-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
