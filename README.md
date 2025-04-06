@@ -4,8 +4,7 @@
 
 **SanDrop** is a modern file storing and sharing platform. It allows users to upload files, store them securely, and generate shareable links — all through a seamless web interface. Built for speed, scalability, and simplicity.
 
-![SanDrop Banner](![image](https://github.com/user-attachments/assets/bfd26dbb-34ee-4875-b74d-374598a93578)
-)
+![SanDrop Banner](![image](https://github.com/user-attachments/assets/8cbf8a6b-36ed-42c7-8271-584b7fa92c3c))
 
 ## 🔗 Live Demo
 
