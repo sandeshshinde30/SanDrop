@@ -43,3 +43,20 @@ Backend uploads it to AWS S3
 MongoDB stores the file metadata (name, size, URL, etc.)
 
 Shareable link is returned
+
+
+## Project Demo
+### Choosing file
+![image](https://github.com/user-attachments/assets/9e62f261-208f-4c78-9e2b-f035ed275846)
+
+### Uploading file
+![image](https://github.com/user-attachments/assets/d3ba866d-a3e9-4494-983b-603398508e97)
+
+### Checking uploaded file
+![image](https://github.com/user-attachments/assets/893f9717-e721-4b57-83a5-fee179bc7533)
+
+### Downloading the file
+
+
+
+
