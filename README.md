@@ -33,6 +33,9 @@ http://13.233.159.244/
 - ✅ Docker Compose setup with separate containers for frontend, backend, and database  
 - ✅ Deployed on AWS EC2 instance
 - ✅ 6 digit unique code generated to access/download the file
+- ✅ Guest users have 2 days storage
+- ✅ Loged-in users have 21 days storage
+
 
 ---
 ## 📁 File Upload Example
