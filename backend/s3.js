@@ -1,3 +1,4 @@
+// s3.js (backend)
 import aws from 'aws-sdk';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
@@ -13,24 +14,33 @@ const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
 const s3 = new aws.S3({
-    region,
-    accessKeyId,
-    secretAccessKey,
-    signatureVersion: "v4"
-})
+  region,
+  accessKeyId,
+  secretAccessKey,
+  signatureVersion: "v4"
+});
 
-const generateSignedUrl = async () => {
-    const bytes = await randomBytes(16);
-    const imageName = bytes.toString('hex');
-
-    const params = ({
+const generateSignedUrl = async (originalFileName) => {
+    try {
+      const uniquePrefix = Date.now();
+      const key = `${uniquePrefix}-${originalFileName}`;
+  
+      const params = {
         Bucket: bucketName,
-        Key: imageName,
-        Expires: 300
-    })
-
-    const signedUrl = await s3.getSignedUrlPromise('putObject', params);
-    return signedUrl;
-}
-
-export default generateSignedUrl;
+        Key: key,
+        Expires: 300,
+        ContentType: 'application/octet-stream',
+        ContentDisposition: `attachment; filename="${originalFileName}"`, // 👈 Important
+      };
+  
+      const signedUrl = await s3.getSignedUrlPromise('putObject', params);
+      return signedUrl;
+    } catch (error) {
+      console.error("Error generating signed URL:", error);
+      return null;
+    }
+  };
+  
+  
+  export default generateSignedUrl;
+  

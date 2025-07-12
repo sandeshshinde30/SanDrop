@@ -66,55 +66,53 @@ const generateUniqueCode = () => {
 
 const handleUpload = async () => {
   if (files.length === 0) {
-      setError("No file selected.");
-      return;
+    setError("No file selected.");
+    return;
   }
 
   setLoading(true);
 
   try {
-      const response = await Promise.all(files.map(() => getSignedUrl()));
-      const urls = response.map(res => res.url);
+    const response = await Promise.all(files.map(file => getSignedUrl(file.name)));
+    const uploadedFileData = await Promise.all(files.map(async (file, index) => {
+      const uploadUrl = response[index].url;
+      const fileKey = response[index].key;
 
-      const uploadedFileData = await Promise.all(files.map(async (file, index) => {
-          const uploadUrl = urls[index];
+      await uploadFile(uploadUrl, file);
+      const finalUrl = uploadUrl.split("?")[0];
 
-          await uploadFile(uploadUrl, file);
-          const finalUrl = uploadUrl.split("?")[0];
+      const uniqueCode = generateUniqueCode();
+      const userEmail = user ? user.email : "guest@sandrop.com";
 
-          const uniqueCode = generateUniqueCode();
-          const userEmail = user ? user.email : "guest@sandrop.com";
+      await axios.post(`${config.API_BASE_URL}/store-file`, {
+        fileUrl: finalUrl,
+        uniqueCode: uniqueCode,
+        email: userEmail,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      });
 
-          await axios.post(`${config.API_BASE_URL}/store-file`, {
-              fileUrl: finalUrl,
-              uniqueCode: uniqueCode,
-              email: userEmail,
-              fileName: file.name,
-              fileType: file.type,
-              fileSize: file.size
-          });
+      return { fileName: file.name, uniqueCode };
+    }));
 
-          return { fileName: file.name, uniqueCode };
-      }));
-
-      setUploadedFiles(uploadedFileData); // Store uploaded file data
-      setShowSuccessPopup(true); // Show popup
-
-      setFiles([]); // Clear selected files
+    setUploadedFiles(uploadedFileData);
+    setShowSuccessPopup(true);
+    setFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
 
   } catch (err) {
-      console.error("Error uploading files:", err);
-      alert("Error uploading files.");
+    console.error("Error uploading files:", err);
+    alert("Error uploading files.");
   }
 
   setLoading(false);
-  if (fileInputRef.current) fileInputRef.current.value = "";
 };
+
 
 const truncateFileName = (name, length = 15) => {
   return name.length > length ? name.substring(0, length) + "..." : name;
 };
-
 
 
 

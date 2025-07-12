@@ -46,6 +46,16 @@ const FileDownload = () => {
     setLoading(false);
   };
 
+  const downloadFile = (url) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+
   return (
     <div className="w-full flex flex-col items-center justify-center bg-gray-100 ">
       <div className="bg-white p-6 rounded-lg shadow-md w-80 max-w-md">
@@ -85,13 +95,13 @@ const FileDownload = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
             <h2 className="text-lg font-semibold mb-3">File Ready to Download</h2>
             <p className="text-gray-700 mb-4">Click the button below to download your file.</p>
-            <a
-              href={fileUrl}
-              download
-              className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700"
-            >
-              Receive File
-            </a>
+            <button
+  onClick={() => downloadFile(fileUrl)}
+  className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+>
+  Receive File
+</button>
+
             <button
               className="block w-full mt-3 text-gray-600 underline hover:text-gray-800"
               onClick={() => setShowPopup(false)}
