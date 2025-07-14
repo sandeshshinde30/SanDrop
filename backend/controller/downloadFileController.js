@@ -5,7 +5,11 @@ export const getFile = async (req, res) => {
         const { uniqueCode } = req.params;
         console.log("Received uniqueCode:", uniqueCode);
 
-        const file = await File.findOne({ uniqueCode });
+        const file = await File.findOneAndUpdate(
+            { uniqueCode },
+            { $inc: { downloadCount: 1 } },
+            { new: true }
+        );
 
         if (!file) {
             console.log("File not found for code:", uniqueCode);

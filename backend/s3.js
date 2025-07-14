@@ -20,26 +20,59 @@ const s3 = new aws.S3({
   signatureVersion: "v4"
 });
 
-const generateSignedUrl = async (originalFileName) => {
-    try {
-      const uniquePrefix = Date.now();
-      const key = `${uniquePrefix}-${originalFileName}`;
-  
-      const params = {
-        Bucket: bucketName,
-        Key: key,
-        Expires: 300,
-        ContentType: 'application/octet-stream',
-        ContentDisposition: `attachment; filename="${originalFileName}"`, // 👈 Important
-      };
-  
-      const signedUrl = await s3.getSignedUrlPromise('putObject', params);
-      return signedUrl;
-    } catch (error) {
-      console.error("Error generating signed URL:", error);
-      return null;
-    }
+const generateSignedUrl = async (originalFileName, fileType) => {
+  try {
+    const uniquePrefix = Date.now();
+    const key = `${uniquePrefix}-${originalFileName}`;
+
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+      Expires: 300,
+      ContentType: fileType || 'application/octet-stream',
+      // ContentDisposition: `attachment; filename="${originalFileName}"`, // Removed to avoid signature mismatch
+    };
+
+    const signedUrl = await s3.getSignedUrlPromise('putObject', params);
+    return signedUrl;
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    return null;
+  }
+};
+
+export const initiateMultipartUpload = async (fileName, fileType) => {
+  const key = `${Date.now()}-${fileName}`;
+  const params = {
+    Bucket: bucketName,
+    Key: key,
+    ContentType: fileType,
   };
+  const { UploadId } = await s3.createMultipartUpload(params).promise();
+  return { uploadId: UploadId, key };
+};
+
+export const getMultipartPresignedUrl = async (key, uploadId, partNumber) => {
+  const params = {
+    Bucket: bucketName,
+    Key: key,
+    UploadId: uploadId,
+    PartNumber: partNumber,
+    // ContentType: fileType, // REMOVED
+  };
+  const url = await s3.getSignedUrlPromise('uploadPart', params);
+  return url;
+};
+
+export const completeMultipartUpload = async (key, uploadId, parts) => {
+  const params = {
+    Bucket: bucketName,
+    Key: key,
+    UploadId: uploadId,
+    MultipartUpload: { Parts: parts },
+  };
+  return await s3.completeMultipartUpload(params).promise();
+};
   
   
   export default generateSignedUrl;

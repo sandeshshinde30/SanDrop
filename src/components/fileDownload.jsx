@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import config from "../url.js";
 const FileDownload = () => {
@@ -55,9 +55,41 @@ const FileDownload = () => {
     document.body.removeChild(link);
   };
   
+  // Remove instant download effect
+  // useEffect(() => {
+  //   if (fileUrl) {
+  //     downloadFile(fileUrl);
+  //     setFileUrl("");
+  //   }
+  // }, [fileUrl]);
+
+  // Download file as blob from presigned URL
+  const handleBlobDownload = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      // Try to get filename from Content-Disposition or fallback
+      let filename = url.split("/").pop().split("?")[0] || "file";
+      const disposition = response.headers.get('Content-Disposition');
+      if (disposition && disposition.indexOf('filename=') !== -1) {
+        filename = disposition.split('filename=')[1].replace(/['"]/g, '').split(';')[0];
+      }
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      setShowPopup(false);
+    } catch (err) {
+      alert('Failed to download file.');
+    }
+  };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center bg-gray-100 ">
+    <div className="w-full flex flex-col items-center justify-center">
       <div className="bg-white p-6 rounded-lg shadow-md w-80 max-w-md">
         <h2 className="text-xl font-bold mb-4 text-[#0077B6]">Receive File</h2>
         <div className="flex justify-center space-x-2">
@@ -88,22 +120,20 @@ const FileDownload = () => {
           )}
         </button>
       </div>
-
       {/* Popup Modal */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
+      {showPopup && fileUrl && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
             <h2 className="text-lg font-semibold mb-3">File Ready to Download</h2>
             <p className="text-gray-700 mb-4">Click the button below to download your file.</p>
             <button
-  onClick={() => downloadFile(fileUrl)}
-  className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700"
->
-  Receive File
-</button>
-
+              onClick={() => handleBlobDownload(fileUrl)}
+              className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700 w-full mb-2"
+            >
+              Download File
+            </button>
             <button
-              className="block w-full mt-3 text-gray-600 underline hover:text-gray-800"
+              className="block w-full mt-1 text-gray-600 underline hover:text-gray-800"
               onClick={() => setShowPopup(false)}
             >
               Close

@@ -8,7 +8,9 @@ const fileSchema = new mongoose.Schema({
     fileType: { type: String, required: true },
     fileSize: { type: Number, required: true },
     uploadedAt: { type: Date, default: Date.now },
-    expiresAt: { type: Date, required: true } 
+    expiresAt: { type: Date, required: true },
+    downloadCount: { type: Number, default: 0 },
+    sharedWith: [{ type: String }]
 });
 
 

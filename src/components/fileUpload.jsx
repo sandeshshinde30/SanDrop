@@ -1,21 +1,59 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../index.css";
-import { uploadFile, getSignedUrl } from "../services/api";
-import axios from "axios";
-import { Plus, Send } from "lucide-react"; 
+import { Plus, Send, X } from "lucide-react";
 import { FileText, Image, File, FileVideo, FileAudio, FileArchive, FileCode } from "lucide-react";
 import config from "../url.js";
+import axios from "axios";
+import { useResumableS3Upload } from "./useResumableS3Upload";
+import { v4 as uuidv4 } from "uuid";
 
 const FileUpload = () => {
-  const [files, setFiles] = useState([]);  // Store multiple files
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [file, setFile] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-const [uploadedFiles, setUploadedFiles] = useState([]); // Store uploaded files
-
-  
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const fileInputRef = useRef();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const {
+    progress, status, error, upload, pause, resume, retry, clear, resumeInfo
+  } = useResumableS3Upload({
+    apiBaseUrl: config.API_BASE_URL,
+    onComplete: async ({ key }) => {
+      // 1. Generate unique code (6 digits)
+      const uniqueCode = Math.floor(100000 + Math.random() * 900000);
+      // 2. Compose S3 URL
+      const s3Url = `https://sandrop.s3.amazonaws.com/${key}`;
+      // 3. Get user email
+      const userEmail = user ? user.email : "guest@sandrop.com";
+      // 4. Register in DB
+      try {
+        await axios.post(`${config.API_BASE_URL}/store-file`, {
+          fileUrl: s3Url,
+          uniqueCode,
+          email: userEmail,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        });
+        setShowSuccessPopup(true);
+        setUploadedFile({ fileName: file.name, key, uniqueCode });
+      } catch (err) {
+        alert("Upload to S3 succeeded, but failed to register file in DB: " + (err.message || "Unknown error"));
+      }
+    }
+  });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const getFileIcon = (fileType) => {
     if (fileType.startsWith("image/")) return <Image size={24} className="text-blue-500" />;
@@ -36,191 +74,120 @@ const [uploadedFiles, setUploadedFiles] = useState([]); // Store uploaded files
       : `${(size / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-
-  useEffect(() => {
-    const getData = async () => {
-      // const response = await getSignedUrl();
-      // setUrl(response.url);
-    };
-    getData();
-  }, []);
-
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files); 
-    const maxFileSize = user ? 100 * 1024 * 1024 : 10 * 1024 * 1024; 
+    setFile(e.target.files[0]);
+    clear();
+    setShowSuccessPopup(false);
+    setUploadedFile(null);
+  };
 
-    const validFiles = selectedFiles.filter(file => file.size <= maxFileSize);
-
-    if (validFiles.length === 0) {
-        setError(`File size exceeds the limit of ${user ? "100MB" : "10MB"}.`);
-        return;
-    }
-
-    setFiles(user ? validFiles : [validFiles[0]]);  
-    setError("");
-};
-
-const generateUniqueCode = () => {
-    return Math.floor(100000 + Math.random() * 900000);
-};
-
-const handleUpload = async () => {
-  if (files.length === 0) {
-    setError("No file selected.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const response = await Promise.all(files.map(file => getSignedUrl(file.name)));
-    const uploadedFileData = await Promise.all(files.map(async (file, index) => {
-      const uploadUrl = response[index].url;
-      const fileKey = response[index].key;
-
-      await uploadFile(uploadUrl, file);
-      const finalUrl = uploadUrl.split("?")[0];
-
-      const uniqueCode = generateUniqueCode();
-      const userEmail = user ? user.email : "guest@sandrop.com";
-
-      await axios.post(`${config.API_BASE_URL}/store-file`, {
-        fileUrl: finalUrl,
-        uniqueCode: uniqueCode,
-        email: userEmail,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size
-      });
-
-      return { fileName: file.name, uniqueCode };
-    }));
-
-    setUploadedFiles(uploadedFileData);
-    setShowSuccessPopup(true);
-    setFiles([]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-
-  } catch (err) {
-    console.error("Error uploading files:", err);
-    alert("Error uploading files.");
-  }
-
-  setLoading(false);
-};
-
-
-const truncateFileName = (name, length = 15) => {
-  return name.length > length ? name.substring(0, length) + "..." : name;
-};
-
-
+  const truncateFileName = (name, length = 15) => {
+    return name.length > length ? name.substring(0, length) + "..." : name;
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gray-100">
+    <div className="flex flex-col items-center justify-center">
       <form
-        className="bg-white p-6 rounded-lg shadow-md w-80  flex flex-col gap-4"
-        onSubmit={(e) => e.preventDefault()}
+        className="bg-white p-6 rounded-lg shadow-md w-80 flex flex-col gap-4"
+        onSubmit={e => e.preventDefault()}
       >
-
-      <h1 className="text-xl font-extrabold tracking-wide text-[#0077B6]">Send File</h1>
-      
+        <h1 className="text-xl font-extrabold tracking-wide text-[#0077B6]">Send File</h1>
         <div className="flex items-center gap-3 border border-dashed border-gray-400 p-3 rounded-lg cursor-pointer">
-            
-            <label htmlFor="file" className="cursor-pointer flex items-center gap-2">
+          <label htmlFor="file" className="cursor-pointer flex items-center gap-2">
             <Plus className="text-blue-500" size={20} />
             <span className="text-gray-700 text-sm">Choose a file</span>
           </label>
           <input
-    type="file"
-    id="file"
-    ref={fileInputRef}
-    onChange={handleFileChange}
-    className="hidden"
-    multiple={!!user} 
-/>
-
+            type="file"
+            id="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            multiple={false}
+          />
         </div>
-
-      
-        {files.length > 0 && (
-  <div className="w-full">
-    {files.map((file, index) => (
-      <div key={index} className="flex items-center justify-between bg-gray-200 px-3 py-2 rounded-lg relative group mb-2">
-        <div className="flex items-center gap-2">
-          {getFileIcon(file.type)}
-          <span 
-            className="text-gray-700 text-sm truncate max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap"
-            title={file.name}
-          >
-            {file.name}
-          </span>
-        </div>
-
-        <span className="text-gray-500 text-xs group-hover:hidden">
-          {formatFileSize(file.size)}
-        </span>
-
-        <button 
-          onClick={() => setFiles(files.filter((_, i) => i !== index))} 
-          className="text-red-500 hover:text-red-700 hidden group-hover:block"
-          title="Remove file"
-        >
-          ❌
-        </button>
-      </div>
-    ))}
-
-    <div className="w-full mt-4">
-      <button
-        type="button"
-        className="w-full flex items-center justify-center text-white bg-[#0077B6] py-2 px-4 rounded-lg hover:bg-[#023E8A] focus:ring-2 focus:ring-blue-500"
-        onClick={handleUpload}
-        disabled={loading}
-      >
-        {loading ? (
-          <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"></div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h1 className="text-md font-medium">Send</h1>
-            <Send size={18} />
+        {file && (
+          <div className="w-full">
+            <div className="flex flex-col gap-1 mb-3 bg-gray-100 rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700 text-sm truncate max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap" title={file.name}>
+                    {file.name}
+                  </span>
+                </div>
+                <span className="text-gray-500 text-xs">
+                  {(file.size < 1024
+                    ? `${file.size} B`
+                    : file.size < 1024 * 1024
+                    ? `${(file.size / 1024).toFixed(2)} KB`
+                    : `${(file.size / (1024 * 1024)).toFixed(2)} MB`)}
+                </span>
+                <button
+                  onClick={() => { setFile(null); clear(); setShowSuccessPopup(false); setUploadedFile(null); }}
+                  className="text-red-500 hover:text-red-700 ml-2"
+                  title="Remove file"
+                  type="button"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-1">
+                <div
+                  className="h-2 bg-[#0096C7] rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-gray-500 text-xs">Progress: {progress}%</span>
+                <span className="text-gray-500 text-xs">Status: {status}</span>
+                {error && <span className="text-red-500 text-xs">{error}</span>}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                {status === "idle" && (
+                  <button className="btn bg-blue-600 text-white px-3 py-1 rounded" onClick={() => upload(file)} type="button">Start Upload</button>
+                )}
+                {status === "uploading" && (
+                  <button className="btn bg-yellow-500 text-white px-3 py-1 rounded" onClick={pause} type="button">Pause</button>
+                )}
+                {status === "paused" && (
+                  <button className="btn bg-green-600 text-white px-3 py-1 rounded" onClick={() => resume(file)} type="button">Resume</button>
+                )}
+                {status === "error" && isOnline && (
+                  <button className="btn bg-yellow-600 text-white px-3 py-1 rounded" onClick={() => retry(file)} type="button">Retry</button>
+                )}
+                {(status === "complete" || status === "idle") && (
+                  <button className="btn bg-gray-400 text-white px-3 py-1 rounded" onClick={clear} type="button">Clear</button>
+                )}
+              </div>
+            </div>
           </div>
         )}
-      </button>
-    </div>
-  </div>
-)}
-
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {!file && resumeInfo && (
+          <div className="mt-4">
+            <div>Found incomplete upload: {resumeInfo.fileName}</div>
+            <button className="btn bg-blue-600 text-white px-3 py-1 rounded mt-2" onClick={() => fileInputRef.current.click()} type="button">Resume Upload</button>
+          </div>
+        )}
       </form>
-
-    
-
-{showSuccessPopup && (
-  <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
-      <h2 className="text-lg font-semibold mb-3">Upload Successful! </h2>
-      <p className="text-gray-700 mb-4">Your files have been uploaded.</p>
-
-      <div className="text-left text-sm bg-gray-100 p-3 rounded-lg">
-        {uploadedFiles.map((file, index) => (
-          <p key={index}>
-            {truncateFileName(file.fileName)} - <strong className="tracking-wider">Code: {file.uniqueCode}</strong>
-          </p>
-        ))}
-      </div>
-
-      <button
-        className="bg-green-500  text-white py-2 px-4 rounded-lg mt-4 hover:bg-green-700"
-        onClick={() => setShowSuccessPopup(false)}
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
-
-
+      {showSuccessPopup && uploadedFile && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+            <h2 className="text-lg font-semibold mb-3">Upload Successful! </h2>
+            <p className="text-gray-700 mb-4">Your file has been uploaded.</p>
+            <div className="text-left text-sm bg-gray-100 p-3 rounded-lg">
+              <p>
+                {truncateFileName(uploadedFile.fileName)} - <strong className="tracking-wider">Code: {uploadedFile.uniqueCode}</strong>
+              </p>
+            </div>
+            <button
+              className="bg-green-500  text-white py-2 px-4 rounded-lg mt-4 hover:bg-green-700"
+              onClick={() => setShowSuccessPopup(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
