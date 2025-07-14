@@ -11,7 +11,8 @@ app.use(express.json());
 
 app.use("/api", routes);
 
-const MONGO_URI = "mongodb://localhost:27017/";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://admin:password@localhost:27018/sandropdb?authSource=admin";
+
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log(`Connected to MongoDB at ${MONGO_URI}`))
