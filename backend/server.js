@@ -9,11 +9,11 @@ app.use(cors());
 app.use(express.json()); 
 
 app.use("/api", routes);
-const MONGO_URI = "mongodb://localhost:27017/sandropdb";
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("Connected to MongoDB"))
+
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sandropdb";
+
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log(`Connected to MongoDB at ${MONGO_URI}`))
     .catch((err) => console.error("MongoDB connection error:", err));
 
 app.listen(3000, () => console.log("Server running on port 3000"));
-
-
