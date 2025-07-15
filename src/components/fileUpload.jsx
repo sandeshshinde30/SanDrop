@@ -86,101 +86,107 @@ const FileUpload = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <form
-        className="bg-white p-6 rounded-lg shadow-md w-80 flex flex-col gap-4"
-        onSubmit={e => e.preventDefault()}
-      >
-        <h1 className="text-xl font-extrabold tracking-wide text-[#0077B6]">Send File</h1>
-        <div className="flex items-center gap-3 border border-dashed border-gray-400 p-3 rounded-lg cursor-pointer">
-          <label htmlFor="file" className="cursor-pointer flex items-center gap-2">
-            <Plus className="text-blue-500" size={20} />
-            <span className="text-gray-700 text-sm">Choose a file</span>
-          </label>
-          <input
-            type="file"
-            id="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            multiple={false}
-          />
-        </div>
-        {file && (
-          <div className="w-full">
-            <div className="flex flex-col gap-1 mb-3 bg-gray-100 rounded-lg p-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-700 text-sm truncate max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap" title={file.name}>
-                    {file.name}
-                  </span>
-                </div>
-                <span className="text-gray-500 text-xs">
-                  {(file.size < 1024
-                    ? `${file.size} B`
-                    : file.size < 1024 * 1024
-                    ? `${(file.size / 1024).toFixed(2)} KB`
-                    : `${(file.size / (1024 * 1024)).toFixed(2)} MB`)}
+    <form
+      className="w-full flex flex-col gap-4"
+      onSubmit={e => e.preventDefault()}
+    >
+      <h1 className="text-xl font-extrabold tracking-wide text-[#0077B6]">Send File</h1>
+      <div className="flex items-center gap-3 border border-dashed border-gray-400 p-3 rounded-lg cursor-pointer">
+        <label htmlFor="file" className="cursor-pointer flex items-center gap-2">
+          <Plus className="text-blue-500" size={20} />
+          <span className="text-gray-700 text-sm">Choose a file</span>
+        </label>
+        <input
+          type="file"
+          id="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          multiple={false}
+        />
+      </div>
+      {/* Progress/Status/Buttons Section */}
+      {file && (
+        <div className="w-full">
+          <div className="flex flex-col gap-1 mb-3 bg-gray-50 rounded-lg p-3 border border-blue-100">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-gray-700 text-sm truncate max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap font-medium" title={file.name}>
+                  {file.name}
                 </span>
-                <button
-                  onClick={() => { setFile(null); clear(); setShowSuccessPopup(false); setUploadedFile(null); }}
-                  className="text-red-500 hover:text-red-700 ml-2"
-                  title="Remove file"
-                  type="button"
-                >
-                  <X size={16} />
-                </button>
               </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-1">
-                <div
-                  className="h-2 bg-[#0096C7] rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-gray-500 text-xs">Progress: {progress}%</span>
-                <span className="text-gray-500 text-xs">Status: {status}</span>
-                {error && <span className="text-red-500 text-xs">{error}</span>}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                {status === "idle" && (
-                  <button className="btn bg-blue-600 text-white px-3 py-1 rounded" onClick={() => upload(file)} type="button">Start Upload</button>
-                )}
-                {status === "uploading" && (
-                  <button className="btn bg-yellow-500 text-white px-3 py-1 rounded" onClick={pause} type="button">Pause</button>
-                )}
-                {status === "paused" && (
-                  <button className="btn bg-green-600 text-white px-3 py-1 rounded" onClick={() => resume(file)} type="button">Resume</button>
-                )}
-                {status === "error" && isOnline && (
-                  <button className="btn bg-yellow-600 text-white px-3 py-1 rounded" onClick={() => retry(file)} type="button">Retry</button>
-                )}
-                {(status === "complete" || status === "idle") && (
-                  <button className="btn bg-gray-400 text-white px-3 py-1 rounded" onClick={clear} type="button">Clear</button>
-                )}
-              </div>
+              <span className="text-gray-400 text-xs font-medium">
+                {formatFileSize(file.size)}
+              </span>
+              <button
+                onClick={() => { setFile(null); clear(); setShowSuccessPopup(false); setUploadedFile(null); }}
+                className="ml-2 p-1.5 rounded-full bg-gray-100 shadow-sm transition-colors duration-150 hover:bg-red-500 group focus:outline-none focus:ring-2 focus:ring-red-200"
+                title="Remove file"
+                type="button"
+              >
+                <X size={18} className="text-red-500 group-hover:text-white transition-colors duration-150" />
+              </button>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-1">
+              <div
+                className="h-2 bg-[#90e0ef] rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs sm:text-sm">
+              <span className="text-gray-500">Progress: <span className="font-medium">{progress}%</span></span>
+              <span className={`px-2 py-0.5 rounded-full font-medium ${status === "uploading" ? "bg-blue-100 text-blue-700" : status === "paused" ? "bg-yellow-100 text-yellow-700" : status === "complete" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                style={{minWidth:'60px',textAlign:'center'}}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </span>
+              {error && <span className="text-red-500 font-medium">{error}</span>}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {status === "idle" && (
+                <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition" onClick={() => upload(file)} type="button">Start Upload</button>
+              )}
+              {status === "uploading" && (
+                <button className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition" onClick={pause} type="button">Pause</button>
+              )}
+              {status === "paused" && (
+                <button className="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition" onClick={() => resume(file)} type="button">Resume</button>
+              )}
+              {status === "error" && isOnline && (
+                <button className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition" onClick={() => retry(file)} type="button">Retry</button>
+              )}
+              {(status === "complete" || status === "idle") && (
+                <button className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition" onClick={clear} type="button">Clear</button>
+              )}
             </div>
           </div>
-        )}
-        {!file && resumeInfo && (
-          <div className="mt-4">
-            <div>Found incomplete upload: {resumeInfo.fileName}</div>
-            <button className="btn bg-blue-600 text-white px-3 py-1 rounded mt-2" onClick={() => fileInputRef.current.click()} type="button">Resume Upload</button>
-          </div>
-        )}
-      </form>
+        </div>
+      )}
+      {!file && resumeInfo && (
+        <div className="mt-4">
+          <div>Found incomplete upload: {resumeInfo.fileName}</div>
+          <button className="btn bg-blue-600 text-white px-3 py-1 rounded mt-2" onClick={() => fileInputRef.current.click()} type="button">Resume Upload</button>
+        </div>
+      )}
+      {/* Upload Success Popup */}
       {showSuccessPopup && uploadedFile && (
-        <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
-            <h2 className="text-lg font-semibold mb-3">Upload Successful! </h2>
-            <p className="text-gray-700 mb-4">Your file has been uploaded.</p>
-            <div className="text-left text-sm bg-gray-100 p-3 rounded-lg">
-              <p>
-                {truncateFileName(uploadedFile.fileName)} - <strong className="tracking-wider">Code: {uploadedFile.uniqueCode}</strong>
-              </p>
+            <img src="/check-mark-button-svgrepo-com.svg" alt="Upload Success" className="mx-auto mb-2 w-12 h-12" />
+            <h2 className="text-lg font-medium mb-2 text-green-700">Upload Successful</h2>
+            <p className="text-gray-600 mb-3 text-sm">Your file has been uploaded.</p>
+            <p className="text-xs mb-1 text-gray-500">{truncateFileName(uploadedFile.fileName)}</p>
+            <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded px-3 py-2 text-sm mb-2">
+              <span className="font-mono tracking-widest text-blue-700 text-base">{uploadedFile.uniqueCode}</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(uploadedFile.uniqueCode)}
+                className="text-xs text-blue-600 font-medium hover:underline px-2 py-1 rounded transition"
+                type="button"
+              >
+                Copy
+              </button>
             </div>
             <button
-              className="bg-green-500  text-white py-2 px-4 rounded-lg mt-4 hover:bg-green-700"
+              className="bg-green-100 hover:bg-green-200 text-green-700 py-2 px-4 rounded-md mt-2 w-full font-medium transition"
               onClick={() => setShowSuccessPopup(false)}
             >
               OK
@@ -188,7 +194,7 @@ const FileUpload = () => {
           </div>
         </div>
       )}
-    </div>
+    </form>
   );
 };
 

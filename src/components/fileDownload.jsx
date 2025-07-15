@@ -88,52 +88,66 @@ const FileDownload = () => {
     }
   };
 
+  // Remove the outer card-like div. Start with the form directly.
   return (
-    <div className="w-full flex flex-col items-center justify-center">
-      <div className="bg-white p-6 rounded-lg shadow-md w-80 max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-[#0077B6]">Receive File</h2>
-        <div className="flex justify-center space-x-2">
-          {code.map((digit, index) => (
-            <input
-              key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
-              type="text"
-              value={digit}
-              onChange={(e) => handleChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              maxLength="1"
-              className="w-10 h-12 text-center border border-gray-400 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          ))}
-        </div>
-        {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
-        <button
-          type="button"
-          className="w-full flex items-center justify-center text-white bg-[#0077B6] py-2 px-4 rounded-lg hover:bg-[#023E8A] focus:ring-2 focus:ring-blue-500 mt-4"
-          onClick={handleDownload}
-          disabled={loading}
-        >
-          {loading ? (
-            <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"></div>
-          ) : (
-            <h1 className="text-md font-medium">Receive</h1>
-          )}
-        </button>
+    <form className="w-full flex flex-col gap-4 items-center" onSubmit={e => e.preventDefault()}>
+      <h2 className="text-xl font-bold mb-4 text-[#0077B6]">Receive File</h2>
+      <div className="flex justify-center space-x-2 mb-2">
+        {code.map((digit, index) => (
+          <input
+            key={index}
+            ref={(el) => (inputRefs.current[index] = el)}
+            type="text"
+            value={digit}
+            onChange={(e) => handleChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            maxLength="1"
+            className="w-10 h-12 text-center border border-gray-400 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onPaste={(e) => {
+              e.preventDefault();
+              const paste = e.clipboardData.getData("text").slice(0, 6).split("");
+              if (paste.every(c => /^\d$/.test(c))) {
+                const newCode = [...code];
+                paste.forEach((val, i) => {
+                  if (i < 6) newCode[i] = val;
+                });
+                setCode(newCode);
+                // Focus next empty input
+                const nextIndex = paste.length < 6 ? paste.length : 5;
+                inputRefs.current[nextIndex]?.focus();
+              }
+            }}
+          />
+        ))}
       </div>
+      {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+      <button
+        type="button"
+        className="w-full flex items-center justify-center text-white bg-[#0077B6] py-2 px-4 rounded-lg hover:bg-[#023E8A] focus:ring-2 focus:ring-blue-500 mt-2"
+        onClick={handleDownload}
+        disabled={loading}
+      >
+        {loading ? (
+          <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"></div>
+        ) : (
+          <h1 className="text-md font-medium">Receive</h1>
+        )}
+      </button>
       {/* Popup Modal */}
       {showPopup && fileUrl && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
-            <h2 className="text-lg font-semibold mb-3">File Ready to Download</h2>
-            <p className="text-gray-700 mb-4">Click the button below to download your file.</p>
+            <img src="/package-svgrepo-com.svg" alt="File Ready" className="mx-auto mb-2 w-12 h-12" />
+            <h2 className="text-lg font-medium mb-2 text-green-700">File Ready to Download</h2>
+            <p className="text-gray-600 mb-3 text-sm">Click the button below to download your file.</p>
             <button
               onClick={() => handleBlobDownload(fileUrl)}
-              className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700 w-full mb-2"
+              className="bg-green-100 hover:bg-green-200 text-green-700 py-2 px-4 rounded-md w-full text-sm font-medium mb-2 transition"
             >
               Download File
             </button>
             <button
-              className="block w-full mt-1 text-gray-600 underline hover:text-gray-800"
+              className="block w-full mt-1 text-gray-500 underline hover:text-gray-700 text-xs font-medium"
               onClick={() => setShowPopup(false)}
             >
               Close
@@ -141,7 +155,7 @@ const FileDownload = () => {
           </div>
         </div>
       )}
-    </div>
+    </form>
   );
 };
 
