@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mongo:
-    image: mongo:latest
+    image: mongo:6.0.13-jammy
     container_name: sandrop-mongo
     restart: always
     ports:
