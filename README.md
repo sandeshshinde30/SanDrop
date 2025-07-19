@@ -9,7 +9,7 @@
 
 ## 🔗 Live Demo
 
-[🌐 Visit sandrop.vercel.app ]
+[🌐 Visit https://sandrop.vercel.app/ ]
 ---
 
 ## 📦 Tech Stack
