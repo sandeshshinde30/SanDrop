@@ -9,9 +9,7 @@
 
 ## 🔗 Live Demo
 
-[🌐 Visit SanDrop](http://13.233.159.244/)
-http://13.233.159.244/
-
+[🌐 Visit https://sandrop.vercel.app/ ]
 ---
 
 ## 📦 Tech Stack
