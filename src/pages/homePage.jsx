@@ -27,10 +27,10 @@ function HomePage() {
             <FaUserShield className="text-5xl text-[#0096C7] mb-3" />
             <h3 className="text-2xl font-bold mb-2 text-[#0077B6]">Guest Users</h3>
             <ul className="w-full space-y-2 mt-2">
-              <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
+              {/* <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
                 <span className="inline-block w-2 h-2 bg-[#0096C7] rounded-full"></span>
                 <span>Upload <span className="font-semibold text-[#0077B6]">one file</span> at a time</span>
-              </li>
+              </li> */}
               <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
                 <span className="inline-block w-2 h-2 bg-[#0096C7] rounded-full"></span>
                 <span>Storage for <span className="font-semibold text-[#0077B6]">2 days</span></span>
@@ -46,10 +46,10 @@ function HomePage() {
             <FaUserFriends className="text-5xl text-[#0077B6] mb-3" />
             <h3 className="text-2xl font-bold mb-2 text-[#0096C7]">Logged-in Users</h3>
             <ul className="w-full space-y-2 mt-2">
-              <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
+              {/* <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
                 <span className="inline-block w-2 h-2 bg-[#0077B6] rounded-full"></span>
                 <span>Upload <span className="font-semibold text-[#0096C7]">multiple files</span></span>
-              </li>
+              </li> */}
               <li className="flex items-center gap-2 text-[1.05rem] text-gray-700 justify-center">
                 <span className="inline-block w-2 h-2 bg-[#0077B6] rounded-full"></span>
                 <span>Storage for <span className="font-semibold text-[#0096C7]">21 days</span></span>

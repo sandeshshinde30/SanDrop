@@ -1,4 +1,4 @@
-# Use lightweight node image
+
 FROM node:18-alpine
 
 WORKDIR /app
@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Install serve to serve static files
+
 RUN npm install -g serve
 
 EXPOSE 80
