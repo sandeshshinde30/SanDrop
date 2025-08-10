@@ -12,7 +12,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: sandropdb
     volumes:
-      - ./mongo-data:/data/db  # Mount MongoDB data to local directory
+      - ./mongo-data:/data/db  
 
   backend:
     image: sandeshdocker30/sandrop-backend:1.0
